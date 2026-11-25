@@ -57,8 +57,7 @@
 
         private void BtnClient_Click(object? sender, EventArgs e)
         {
-            // İstemci penceresi bir sonraki adımda eklenecek
-            MessageBox.Show("İstemci penceresi henüz eklenmedi.", "Bilgi");
+            new ClientForm().Show();
         }
     }
 }
