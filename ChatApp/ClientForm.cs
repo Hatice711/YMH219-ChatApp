@@ -6,12 +6,14 @@ namespace ChatApp
     public class ClientForm : Form
     {
         private readonly ChatClient client = new ChatClient();
+        private readonly ChatHistoryService historyService = new ChatHistoryService();
 
         private readonly TextBox txtHost = new TextBox();
         private readonly NumericUpDown numPort = new NumericUpDown();
         private readonly TextBox txtUserName = new TextBox();
         private readonly Button btnConnect = new Button();
         private readonly Button btnDisconnect = new Button();
+        private readonly Button btnSaveHistory = new Button();
         private readonly Label lblStatus = new Label();
         private readonly ListBox lstMessages = new ListBox();
         private readonly TextBox txtMessage = new TextBox();
@@ -28,8 +30,8 @@ namespace ChatApp
         private void BuildUi()
         {
             Text = "Chat İstemcisi - YMH219";
-            ClientSize = new Size(600, 500);
-            MinimumSize = new Size(560, 420);
+            ClientSize = new Size(640, 500);
+            MinimumSize = new Size(600, 420);
             StartPosition = FormStartPosition.WindowsDefaultLocation;   // pencereler üst üste binmesin
             Font = new Font("Segoe UI", 10);
             Padding = new Padding(8);
@@ -55,10 +57,11 @@ namespace ChatApp
             FlowLayoutPanel rowButtons = CreateRow();
             SetupButton(btnConnect, "Bağlan", BtnConnect_Click);
             SetupButton(btnDisconnect, "Bağlantıyı Kes", BtnDisconnect_Click);
+            SetupButton(btnSaveHistory, "Geçmişi Kaydet", BtnSaveHistory_Click);
             lblStatus.AutoSize = true;
             lblStatus.Font = new Font("Segoe UI", 11, FontStyle.Bold);
             lblStatus.Margin = new Padding(12, 8, 0, 0);
-            rowButtons.Controls.AddRange(new Control[] { btnConnect, btnDisconnect, lblStatus });
+            rowButtons.Controls.AddRange(new Control[] { btnConnect, btnDisconnect, btnSaveHistory, lblStatus });
 
             // Mesaj listesi
             lstMessages.Dock = DockStyle.Fill;
@@ -125,6 +128,7 @@ namespace ChatApp
             btnDisconnect.Enabled = connected;
             txtMessage.Enabled = connected;
             btnSend.Enabled = connected;
+            btnSaveHistory.Enabled = lstMessages.Items.Count > 0;
 
             lblStatus.Text = connected ? "● Bağlı" : "● Bağlı değil";
             lblStatus.ForeColor = connected ? Color.ForestGreen : Color.Crimson;
@@ -135,6 +139,7 @@ namespace ChatApp
         {
             lstMessages.Items.Add(line);
             lstMessages.TopIndex = lstMessages.Items.Count - 1;
+            btnSaveHistory.Enabled = true;
         }
 
         private async void BtnConnect_Click(object? sender, EventArgs e)
@@ -199,6 +204,31 @@ namespace ChatApp
                     "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 client.Disconnect();
                 UpdateUi();
+            }
+        }
+
+        private void BtnSaveHistory_Click(object? sender, EventArgs e)
+        {
+            string userName = client.UserName.Length > 0 ? client.UserName : txtUserName.Text.Trim();
+
+            using SaveFileDialog dialog = new SaveFileDialog();
+            dialog.Title = "Mesaj Geçmişini Kaydet";
+            dialog.Filter = "Metin dosyası (*.txt)|*.txt";
+            dialog.FileName = $"sohbet_{userName}_{DateTime.Now:yyyyMMdd_HHmmss}.txt";
+
+            if (dialog.ShowDialog(this) != DialogResult.OK)
+                return;
+
+            try
+            {
+                historyService.Save(dialog.FileName, userName, lstMessages.Items.Cast<string>());
+                MessageBox.Show($"{lstMessages.Items.Count} satır kaydedildi:\n{dialog.FileName}",
+                    "Kaydedildi", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                MessageBox.Show("Dosya kaydedilemedi:\n" + ex.Message,
+                    "Hata", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
