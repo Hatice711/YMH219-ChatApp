@@ -52,13 +52,12 @@
 
         private void BtnServer_Click(object? sender, EventArgs e)
         {
-            // Sunucu penceresi bir sonraki adımda eklenecek
-            MessageBox.Show("Sunucu penceresi henüz eklenmedi.", "Bilgi");
+            new ServerForm().Show();
         }
 
         private void BtnClient_Click(object? sender, EventArgs e)
         {
-            // İstemci penceresi daha sonraki adımda eklenecek
+            // İstemci penceresi bir sonraki adımda eklenecek
             MessageBox.Show("İstemci penceresi henüz eklenmedi.", "Bilgi");
         }
     }
